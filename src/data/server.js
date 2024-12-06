@@ -23,22 +23,10 @@ app.get('/api/questions', async (req, res) => {
     }
 });
 
-// API to add a new question NOT USED
-/*app.post('/api/questions', async (req, res) => {
-    try {
-        const { questionText, difficulty, correctAnswer } = req.body;
-        const newQuestionId = await addQuestion(questionText, difficulty, correctAnswer);
-        res.status(201).json({ id: newQuestionId, message: 'Question added successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Database error' });
-    }
-});*/
-
 app.post('/api/test-results', async (req, res) => {
     try {
         const { testType, studentId, questionId, answer, time, isCorrect, answerType } = req.body;
-        // Determine the table name based on the test type
+        // Determine the table name based on the test type TODO: ADD TO ENV
         let tableName;
         if (testType === 'pre-test') {
             tableName = 'pretest_results';
