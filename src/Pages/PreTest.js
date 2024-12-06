@@ -2,20 +2,25 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const PreTest = () => {
-    const [questions, setQuestions] = useState([]); // Store questions
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // Track current question
-    const [loading, setLoading] = useState(true); // Loading state
-    const [answers, setAnswers] = useState([]); // Store answers
+    const [studentId, setStudentId] = useState('');
+    const [questions, setQuestions] = useState([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [answer, setAnswer] = useState('');
+    const [startTime, setStartTime] = useState(null);
 
     useEffect(() => {
-        // Fetch 3 easy questions from the backend
+        // Retrieve student ID from localStorage
+        const id = localStorage.getItem('studentId');
+        setStudentId(id);
+
+        // Fetch 3 easy questions
         axios
-            .get('http://localhost:5000/api/questions', {
-                params: { difficulty: 'easy', limit: 3 }, // Assuming backend supports limiting results
-            })
+            .get('http://localhost:5000/api/questions', { params: { difficulty: 'easy', limit: 3 } })
             .then((response) => {
                 setQuestions(response.data);
                 setLoading(false);
+                setStartTime(Date.now()); // Start timing the first question
             })
             .catch((error) => {
                 console.error('Error fetching questions:', error);
@@ -23,37 +28,37 @@ const PreTest = () => {
             });
     }, []);
 
-    const handleSubmitAnswer = (isCorrect) => {
+    const handleSubmitAnswer = (answerType) => {
         const question = questions[currentQuestionIndex];
-        const answerData = {
+        const timeTaken = (Date.now() - startTime) / 1000;
+        const testType = 'pre-test';
+        const payload = {
+            testType,
+            studentId,
             questionId: question.id,
-            isCorrect,
-            timeTaken: Math.random() * 10, // Placeholder for time taken
+            answer,
+            time: parseInt(timeTaken),
+            isCorrect: answerType === 'linear' ? question.correct_answer === answer.trim() : null,
+            answerType,
         };
 
-        setAnswers([...answers, answerData]); // Save answer
-
-        if (currentQuestionIndex < questions.length - 1) {
-            // Go to next question if not done
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
-        } else {
-            // Submit results when done with 3 questions
-            axios
-                .post('http://localhost:5000/api/pre-test-results', { results: [...answers, answerData] })
-                .then(() => {
-                    console.log('Pre-test results saved.');
-                    window.location.href = '/main-test'; // Redirect to main test
-                })
-                .catch((error) => {
-                    console.error('Error saving results:', error);
-                });
-        }
+        axios
+            .post('http://localhost:5000/api/test-results', payload)
+            .then(() => {
+                if (currentQuestionIndex < questions.length - 1) {
+                    setCurrentQuestionIndex(currentQuestionIndex + 1);
+                    setStartTime(Date.now());
+                    setAnswer('');
+                } else {
+                    window.location.href = '/main-test';
+                }
+            })
+            .catch((error) => {
+                console.error('Error submitting answer:', error);
+            });
     };
 
-    // Show a loading spinner if data is still being fetched
     if (loading) return <div>Loading questions...</div>;
-
-    // If questions are not loaded or empty, display an error message
     if (!questions || questions.length === 0) return <div>No questions available.</div>;
 
     const currentQuestion = questions[currentQuestionIndex];
@@ -61,10 +66,19 @@ const PreTest = () => {
     return (
         <div>
             <h1>Pre-Test</h1>
-            <p>Answer the following question:</p>
-            <p><strong>{currentQuestion.question_text}</strong></p>
-            <button onClick={() => handleSubmitAnswer(true)}>Correct</button>
-            <button onClick={() => handleSubmitAnswer(false)}>Incorrect</button>
+            <p>Student ID: {studentId}</p>
+            <p>{currentQuestion.question_text}</p>
+            <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="Enter your answer"
+                rows="4"
+                cols="50"
+            ></textarea>
+            <div>
+                <button onClick={() => handleSubmitAnswer('linear')}>Submit Equation</button>
+                <button onClick={() => handleSubmitAnswer('description')}>Submit Description</button>
+            </div>
         </div>
     );
 };
