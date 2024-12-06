@@ -7,16 +7,16 @@ const getQuestionsByDifficulty = async (difficulty) => {
     return rows;
 };
 
-// Function to add a new question
-const addQuestion = async (questionText, difficulty, correctAnswer) => {
-    const result = await db.query(
-        'INSERT INTO questions (question_text, difficulty, correct_answer) VALUES (?, ?, ?)',
-        [questionText, difficulty, correctAnswer]
+const getRandomQuestionsByDifficulty = async (difficulty, limit) => {
+    const [rows] = await db.query(
+        'SELECT * FROM questions WHERE difficulty = ? ORDER BY RAND() LIMIT ?',
+        [difficulty, limit]
     );
-    return result.insertId; // Return the ID of the newly inserted question
+    return rows;
 };
+
 
 module.exports = {
     getQuestionsByDifficulty,
-    addQuestion,
+    getRandomQuestionsByDifficulty,
 };

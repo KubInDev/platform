@@ -1,31 +1,22 @@
 const db = require('./db'); 
 
-const savePreTestResult = async (studentId, questionId, answer, time, isCorrect, answerType) => {
-    const result = await db.query(
-        'INSERT INTO pre_test_results (student_id, question_id, answer, time_taken, is_correct, answer_type) VALUES (?, ?, ?, ?, ?, ?)',
+const saveTestResult = async (tableName, studentId, questionId, answer, time, isCorrect, answerType) => {
+
+    try {
+        const result = await db.query(
+            `INSERT INTO ${tableName} (student_id, question_id, answer, time, isCorrect, answerType) VALUES (?, ?, ?, ?, ?, ?)`,
             [studentId, questionId, answer, time, isCorrect, answerType]
-    );
-    return result.insertId; // Return the ID of the newly inserted result
+        );
+        console.log('Query executed successfully:', result);
+        return result.insertId;
+    } catch (err) {
+        console.error('Error executing query:', err.message);
+        throw err; // Rethrow the error to the calling function
+    }
 };
 
-const saveTestResult = async (studentId, questionId, answer, time, isCorrect, answerType) => {
-    const result = await db.query(
-        'INSERT INTO test_results (student_id, question_id, answer, time_taken, is_correct, answer_type) VALUES (?, ?, ?, ?, ?, ?)',
-            [studentId, questionId, answer, time, isCorrect, answerType]
-    );
-    return result.insertId; // Return the ID of the newly inserted result
-};
 
-const savePostTestResult = async (studentId, questionId, answer, time, isCorrect, answerType) => {
-    const result = await db.query(
-        'INSERT INTO post_test_results (student_id, question_id, answer, time_taken, is_correct, answer_type) VALUES (?, ?, ?, ?, ?, ?)',
-            [studentId, questionId, answer, time, isCorrect, answerType]
-    );
-    return result.insertId; // Return the ID of the newly inserted result
-};
 
 module.exports = {
-    savePreTestResult,
     saveTestResult,
-    savePostTestResult,
 };

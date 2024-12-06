@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { getQuestionsByDifficulty, getRandomQuestionsByDifficulty } = require('./questions');
-const { savePreTestResult } = require ('./results');
+const { saveTestResult } = require ('./results');
 
 const app = express();
 
@@ -35,17 +35,39 @@ app.get('/api/questions', async (req, res) => {
     }
 });*/
 
-app.post('/api/pre-test-results', async (req, res) => {
-
+app.post('/api/test-results', async (req, res) => {
     try {
-        const { studentId, questionId, answer, time, isCorrect, answerType } = req.body;
-        const resultSubmit = await savePreTestResult(studentId, questionId, answer, time, isCorrect, answerType);
+        const { testType, studentId, questionId, answer, time, isCorrect, answerType } = req.body;
+        // Determine the table name based on the test type
+        let tableName;
+        if (testType === 'pre-test') {
+            tableName = 'pretest_results';
+        } else if (testType === 'main-test') {
+            tableName = 'test_results';
+        } else if (testType === 'post-test') {
+            tableName = 'posttest_results';
+        } else {
+            return res.status(400).json({ error: 'Invalid test type' });
+        }
+        // Save the result to the appropriate table
+        const resultSubmit = await saveTestResult(
+            tableName,
+            studentId,
+            questionId,
+            answer,
+            time,
+            isCorrect,
+            answerType
+        );
+        console.log( resultSubmit);
         res.status(201).json({ id: resultSubmit, message: 'Answer submitted successfully' });
     } catch (err) {
-        console.error('Error saving pre-test result:', err);
+        console.error('Error saving test result:', err);
         res.status(500).json({ error: 'Database error' });
     }
 });
+
+
 
 
 const PORT = 5000;
