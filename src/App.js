@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import HomePage from './Pages/HomePage';
 import PreTestPage from './Pages/PreTest';
-import TestPage from './Pages/Test';
+import MainTestPage from './Pages/MainTest';
 import FinalTestPage from './Pages/PostTest';
 
 function App() {
@@ -12,8 +12,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/pre-test" element={<PreTestPage />} />
-                <Route path="/test" element={<TestPage />} />
-                <Route path="/final-test" element={<FinalTestPage />} />
+                <Route path="/main-test" element={<MainTestPage />} />
+                <Route path="/post-test" element={<FinalTestPage />} />
             </Routes>
         </Router>
     );
