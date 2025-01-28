@@ -5,6 +5,7 @@ import HomePage from './Pages/HomePage';
 import PreTestPage from './Pages/PreTest';
 import MainTestPage from './Pages/MainTest';
 import FinalTestPage from './Pages/PostTest';
+import ExaminerValidationPage from './Pages/ExaminerValidationPage'; // Import the examiner page
 
 function App() {
     return (
@@ -14,6 +15,7 @@ function App() {
                 <Route path="/pre-test" element={<PreTestPage />} />
                 <Route path="/main-test" element={<MainTestPage />} />
                 <Route path="/post-test" element={<FinalTestPage />} />
+                <Route path="/examiner" element={<ExaminerValidationPage />} /> {/* Add the examiner page */}
             </Routes>
         </Router>
     );

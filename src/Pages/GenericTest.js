@@ -8,13 +8,12 @@ const GenericTest = ({ testType, questionConfig, nextPage }) => {
     const [loading, setLoading] = useState(true);
     const [answer, setAnswer] = useState('');
     const [startTime, setStartTime] = useState(null);
+    const feedbackType = localStorage.getItem('feedbackType'); // 'binary' or 'gradual'
 
     useEffect(() => {
-        // Retrieve student ID from localStorage
         const id = localStorage.getItem('studentId');
         setStudentId(id);
 
-        // Fetch questions based on questionConfig
         const fetchQuestions = async () => {
             try {
                 const allQuestions = [];
@@ -26,7 +25,7 @@ const GenericTest = ({ testType, questionConfig, nextPage }) => {
                 }
                 setQuestions(allQuestions);
                 setLoading(false);
-                setStartTime(Date.now()); // Start timing the first question
+                setStartTime(Date.now());
             } catch (error) {
                 console.error('Error fetching questions:', error);
                 setLoading(false);
@@ -36,44 +35,61 @@ const GenericTest = ({ testType, questionConfig, nextPage }) => {
         fetchQuestions();
     }, [questionConfig]);
 
-    const handleSubmitAnswer = (answerType) => {
+
+    const handleSubmitAnswer = async (answerType) => {
         const question = questions[currentQuestionIndex];
         const timeTaken = (Date.now() - startTime) / 1000;
+    
         const payload = {
             testType,
             studentId,
             questionId: question.id,
             answer,
             time: parseInt(timeTaken),
-            isCorrect: answerType === 'linear' ? question.correct_answer === answer.trim() : null,
             answerType,
+            feedbackType, // Include feedbackType
         };
-
-        axios
-            .post('http://localhost:5000/api/test-results', payload)
-            .then(() => {
-                if (currentQuestionIndex < questions.length - 1) {
-                    setCurrentQuestionIndex(currentQuestionIndex + 1);
-                    setStartTime(Date.now());
-                    setAnswer('');
+    
+        try {
+            const response = await axios.post('http://localhost:5000/api/test-results', payload);
+    
+            // Handle response for different answer types
+            if (answerType === 'linear') {
+                const validationResult = response.data.validationResult;
+    
+                if (validationResult?.isValid) {
+                    alert(validationResult.message); // Notify user of correct answer
                 } else {
-                    window.location.href = nextPage; // Redirect to the next page
+                    alert(validationResult?.message || 'Incorrect answer. Please try again.');
+                    return; // Stop progression for incorrect answers
                 }
-            })
-            .catch((error) => {
-                console.error('Error submitting answer:', error);
-            });
+            } else if (answerType === 'description') {
+                alert('Your answer has been submitted for examiner review.');
+            }
+    
+            // Move to the next question
+            if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setStartTime(Date.now());
+                setAnswer('');
+            } else {
+                window.location.href = nextPage; // Navigate to the next page after all questions
+            }
+        } catch (error) {
+            console.error('Error submitting answer:', error);
+        }
     };
+    
 
-    if (loading) return <div>Loading questions...</div>;
-    if (!questions || questions.length === 0) return <div>No questions available.</div>;
+
+    if (loading) return <div>Loading...</div>;
+    if (!questions.length) return <div>No questions available.</div>;
 
     const currentQuestion = questions[currentQuestionIndex];
 
     return (
         <div>
             <h1>{testType} Test</h1>
-            <p>Student ID: {studentId}</p>
             <p>{currentQuestion.question_text}</p>
             <textarea
                 value={answer}
@@ -81,7 +97,7 @@ const GenericTest = ({ testType, questionConfig, nextPage }) => {
                 placeholder="Enter your answer"
                 rows="4"
                 cols="50"
-            ></textarea>
+            />
             <div>
                 <button onClick={() => handleSubmitAnswer('linear')}>Submit Equation</button>
                 <button onClick={() => handleSubmitAnswer('description')}>Submit Description</button>
